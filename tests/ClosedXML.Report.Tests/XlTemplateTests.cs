@@ -4,6 +4,7 @@ using FluentAssertions;
 using NSubstitute;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using Xunit;
@@ -280,6 +281,35 @@ namespace ClosedXML.Report.Tests
         {
             var property = template.GetType().GetProperty("Workbook");
             property.SetValue(template, mock);
+        }
+
+        [Fact]
+        public void CommentTemplatingWorks()
+        {
+            XlTemplateTest("1.xlsx",
+                tpl => tpl.AddVariable(new { TestValue1 = "value from test", TestValue2 = 3.2 }),
+                wb =>
+                {
+                    var sheet = wb.Worksheet(1);
+                    var cell = sheet.Cell(1, 1);
+                    cell.HasComment.Should().BeTrue();
+                    cell.Comment.Text.Should().Be("value from test");
+                });
+        }
+
+        [Fact]
+        public void CellCallbackWorks()
+        {
+            XlTemplateTest("1.xlsx",
+                tpl => tpl.AddVariable(new { TestValue1 = "value from test", TestValue2 = 3.2 }),
+                wb =>
+                {
+                    var sheet = wb.Worksheet(1);
+                    var cell = sheet.Cell(1, 1);
+                    cell.Style.Fill.BackgroundColor.Color.Should().Be(Color.Red);
+                },
+                cell => cell.Style.Fill.SetBackgroundColor(XLColor.Red)
+                );
         }
     }
 }

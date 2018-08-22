@@ -32,7 +32,7 @@ namespace ClosedXML.Report.Tests
             }
         }
 
-        protected void XlTemplateTest(string tmplFileName, Action<XLTemplate> arrangeCallback, Action<XLWorkbook> assertCallback)
+        protected void XlTemplateTest(string tmplFileName, Action<XLTemplate> arrangeCallback, Action<XLWorkbook> assertCallback, Action<IXLCell> cellCallback = null)
         {
             /*if (MemoryProfiler.IsActive && MemoryProfiler.CanControlAllocations)
                 MemoryProfiler.EnableAllocations();*/
@@ -51,7 +51,7 @@ namespace ClosedXML.Report.Tests
                     //MemoryProfiler.Dump();
                     // ACT
                     var start = DateTime.Now;
-                    template.Generate();
+                    template.Generate(cellCallback);
                     Output.WriteLine(DateTime.Now.Subtract(start).ToString());
                     //MemoryProfiler.Dump();
                     template.SaveAs(file);

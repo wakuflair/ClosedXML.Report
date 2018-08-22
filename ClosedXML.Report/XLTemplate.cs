@@ -72,13 +72,13 @@ namespace ClosedXML.Report
             _interpreter = new RangeInterpreter(null, _errors);
         }
 
-        public XLGenerateResult Generate()
+        public XLGenerateResult Generate(Action<IXLCell> cellCallBack = null)
         {
             CheckIsDisposed();
             foreach (var ws in Workbook.Worksheets.Where(sh => sh.Visibility == XLWorksheetVisibility.Visible && !sh.PivotTables.Any()).ToArray())
             {
                 ws.ReplaceCFFormulaeToR1C1();
-                _interpreter.Evaluate(ws.AsRange());
+                _interpreter.Evaluate(ws.AsRange(), cellCallBack);
                 ws.ReplaceCFFormulaeToA1();
             }
             return new XLGenerateResult(_errors);

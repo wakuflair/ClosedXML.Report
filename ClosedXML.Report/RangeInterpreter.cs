@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -8,6 +9,7 @@ using ClosedXML.Report.Excel;
 using ClosedXML.Report.Options;
 using ClosedXML.Report.Utils;
 using System.Linq.Dynamic.Core.Exceptions;
+using DocumentFormat.OpenXml.Spreadsheet;
 
 
 namespace ClosedXML.Report
@@ -29,11 +31,11 @@ namespace ClosedXML.Report
             _tagsEvaluator = new TagsEvaluator();
         }
 
-        public void Evaluate(IXLRange range)
+        public void Evaluate(IXLRange range, Action<IXLCell> cellCallBack = null)
         {
             var rangeName = range.RangeAddress.ToStringRelative(true);
             ParseTags(range, rangeName);
-            EvaluateValues(range);
+            EvaluateValues(range, cellCallBack);
             TagsPostprocessing(rangeName, new ProcessingContext(range, null));
         }
 
@@ -91,7 +93,7 @@ namespace ClosedXML.Report
             _tags[destRangeName].AddRange(srcTags.CopyTo(destRange));
         }
 
-        public virtual void EvaluateValues(IXLRange range, params Parameter[] pars)
+        public virtual void EvaluateValues(IXLRange range, Action<IXLCell> cellCallBack = null, params Parameter[] pars)
         {
             foreach (var parameter in pars)
             {
@@ -115,6 +117,15 @@ namespace ClosedXML.Report
                         cell.FormulaA1 = _evaluator.Evaluate(value.Substring(2), pars).ToString();
                     else
                         cell.Value = _evaluator.Evaluate(value, pars);
+
+                    if (cell.HasComment)
+                    {
+                        string commentText = cell.Comment.Text;
+                        cell.Comment.ClearText();
+                        cell.Comment.AddText((string) _evaluator.Evaluate(commentText, pars));
+                    }
+
+                    cellCallBack?.Invoke(cell);
                 }
                 catch (ParseException ex)
                 {
